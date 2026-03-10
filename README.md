@@ -1,45 +1,59 @@
-# Modèle Prédictif de Consommation Énergétique — Gabon
+# ⚡ Énergie & Développement — Togo (Zone UEMOA / BCEAO)
 
-> **Note** : Ce projet a été développé en local dans le cadre de mes travaux personnels en Data Science et rendu public récemment pour démonstration.
+> Système complet d'analyse prédictive multi-cibles pour le Togo et la zone UEMOA, exploitant l'IA pour évaluer l'impact de l'énergie sur le développement humain.
 
 ## Description
 
-Système complet d'analyse et de prédiction de la consommation énergétique au Gabon, avec pipeline ETL automatisé, modèles de Machine Learning et tableaux de bord interactifs.
+Ce projet combine **Intelligence Artificielle**, **Open Data** et **Business Intelligence** pour analyser et prédire l'évolution de la consommation énergétique au Togo et dans les 8 pays de la zone UEMOA. Il met en évidence les liens entre accès à l'électricité, santé publique et croissance économique — des enjeux au cœur des missions de la **BCEAO**.
 
-**Contexte** : Le Gabon, avec Libreville comme principal centre urbain (~50% de la population, ~70% de la consommation électrique), fait face à des défis énergétiques croissants. Ce projet exploite les données publiques de la Banque Mondiale pour analyser les tendances et prédire la consommation future.
+### Objectifs
+
+- **Prédire** la consommation électrique par habitant au Togo (horizon 2024-2028)
+- **Quantifier** l'impact de l'accès à l'énergie sur la mortalité infantile
+- **Benchmarker** le Togo face aux autres pays UEMOA sur des indicateurs clés
+- **Projeter** l'évolution du taux d'électrification avec intervalles de confiance
+
+### Résultats Clés
+
+| Cible | Meilleur Modèle | R² | MAE |
+|---|---|---|---|
+| Consommation électrique (kWh/hab) | Stacking Ensemble | 0.77 | ~20.75 |
+| Mortalité infantile (‰) | LightGBM | 0.92 | ~0.82 |
+| Accès électricité (%) | Ensemble | ~0.85 | ~1.45 |
+
+**Impact estimé** : chaque point supplémentaire d'accès à l'électricité réduit la mortalité infantile de **1.45 points pour mille**.
 
 ## Sources de Données (Open Data)
 
-| Source | Données | Accès |
+| Source | Données | Indicateurs |
 |---|---|---|
-| **Banque Mondiale** | Consommation électrique, accès énergie, PIB, population | [API publique](https://api.worldbank.org/v2/) |
-| **IEA** | Mix énergétique, production, émissions CO2 | [iea.org/countries/gabon](https://www.iea.org/countries/gabon) |
-| **EnergyData.info** | Centrales électriques, réseau de transmission | [energydata.info](https://energydata.info/dataset?q=gabon) |
+| **Banque Mondiale (WDI)** | 25 indicateurs × 8 pays UEMOA | Énergie, Économie, Santé, Démographie |
+
+**Pays couverts** : 🇹🇬 Togo (focus), 🇸🇳 Sénégal, 🇧🇯 Bénin, 🇨🇮 Côte d'Ivoire, 🇧🇫 Burkina Faso, 🇲🇱 Mali, 🇳🇪 Niger, 🇬🇼 Guinée-Bissau
+
+**Couverture temporelle** : 2000 – 2023 (4 651 observations extraites)
 
 ## Architecture du Projet
 
 ```
-energy-prediction/
+energy-prediction-gabon/
 ├── data/
-│   ├── raw/               # Données brutes (Banque Mondiale, IEA)
-│   ├── processed/         # Données nettoyées et transformées
-│   └── predictions/       # Résultats des prédictions
+│   ├── raw/                    # Données brutes API Banque Mondiale
+│   ├── processed/              # Données transformées (192 × 78 features)
+│   └── predictions/            # Prédictions historiques & projections
 ├── src/
-│   ├── etl/               # Pipeline ETL/ELT
-│   │   ├── extract.py     # Extraction des données
-│   │   ├── transform.py   # Nettoyage et transformation
-│   │   └── load.py        # Chargement des données
-│   ├── models/            # Modèles ML
-│   │   ├── train.py       # Entraînement des modèles
-│   │   ├── evaluate.py    # Évaluation et métriques
-│   │   └── predict.py     # Prédictions
-│   └── utils/             # Utilitaires
-│       └── config.py      # Configuration
-├── notebooks/
-│   └── exploration.ipynb  # Analyse exploratoire
+│   ├── etl/
+│   │   ├── extract.py          # Extraction API WDI (25 indicateurs)
+│   │   ├── transform.py        # Pipeline 6 étapes + feature engineering
+│   │   └── load.py             # Préparation multi-cibles
+│   ├── models/
+│   │   ├── train.py            # Entraînement (RF, GB, XGB, LGBM, Stacking)
+│   │   └── predict.py          # Prédictions + projections 2024-2028
+│   └── utils/
+│       └── config.py           # Configuration centralisée
 ├── dashboard/
-│   └── app.py             # Dashboard Streamlit
-├── models/                # Modèles sauvegardés
+│   └── app.py                  # Dashboard Streamlit (5 onglets)
+├── models/                     # Modèles sauvegardés (.joblib)
 ├── requirements.txt
 └── README.md
 ```
@@ -48,53 +62,107 @@ energy-prediction/
 
 | Catégorie | Technologies |
 |---|---|
-| **ETL/ELT** | Python, Pandas, NumPy |
-| **Machine Learning** | Scikit-learn, XGBoost, LightGBM |
-| **Visualisation** | Matplotlib, Seaborn, Plotly |
-| **Dashboard BI** | Streamlit |
-| **Données** | Banque Mondiale Open Data, IEA |
+| **ETL** | Python, Pandas, NumPy, API REST (Banque Mondiale WDI) |
+| **Machine Learning** | Scikit-learn (RandomForest, GradientBoosting, Stacking), XGBoost, LightGBM |
+| **Feature Engineering** | Moyennes mobiles, lag features, indicateurs dérivés, rankings |
+| **Visualisation** | Plotly (graphiques interactifs) |
+| **Dashboard BI** | Streamlit (5 onglets, KPIs, projections) |
+| **Persistance** | joblib (modèles), CSV (données) |
 
-## Pipeline ETL
+## Pipeline
 
-1. **Extract** : Collecte automatisée des données de consommation énergétique via l'API Banque Mondiale
-2. **Transform** : Nettoyage, gestion des valeurs manquantes, feature engineering (tendances, saisonnalité, indicateurs économiques)
-3. **Load** : Stockage structuré des données prêtes pour l'analyse et la modélisation
+### 1. Extract — Collecte de données
 
-## Modèles Prédictifs
+Extraction automatisée de **25 indicateurs** via l'API Banque Mondiale pour **8 pays UEMOA** :
 
-- **Random Forest** : Modèle de référence
-- **XGBoost** : Optimisation par gradient boosting
-- **LightGBM** : Performance et rapidité
+| Groupe | Indicateurs |
+|---|---|
+| **Énergie** | Consommation électrique, accès total/urbain/rural, énergies renouvelables, émissions CO2 |
+| **Économie** | PIB/hab, croissance, inflation, dette, IDE, balance commerciale |
+| **Santé** | Mortalité infantile, espérance de vie, dépenses santé, accès eau potable |
+| **Démographie** | Population totale, croissance, urbanisation |
 
-Métriques : RMSE, MAE, R² — avec validation croisée temporelle.
+### 2. Transform — Feature Engineering
 
-## Dashboard BI
+Pipeline en **6 étapes** :
+1. Pivot des indicateurs en colonnes
+2. Traitement des valeurs manquantes (interpolation + forward/backward fill + médiane)
+3. Features temporelles (variation %, MA3, MA5, lag1, lag2)
+4. Indicateurs dérivés (gap électrification urbain/rural, intensité énergétique, score énergie-santé)
+5. Rankings par pays
+6. Normalisation et validation
 
-Dashboard interactif Streamlit avec :
-- Visualisation des tendances de consommation par pays
-- Comparaisons régionales (zone UEMOA)
-- Prédictions futures avec intervalles de confiance
-- Indicateurs clés (KPIs)
+→ **192 lignes × 78 colonnes** après transformation
+
+### 3. Train — Modélisation Multi-Cibles
+
+3 cibles prédites indépendamment :
+
+| Cible | Description |
+|---|---|
+| `energy` | Consommation électrique par habitant (kWh) |
+| `health` | Mortalité infantile (pour 1 000 naissances) |
+| `access` | Taux d'accès à l'électricité (%) |
+
+**Modèles** : RandomForest, GradientBoosting, XGBoost, LightGBM + **Stacking Ensemble** (meta-learner Ridge)
+
+**Validation** : Split temporel (pas de fuite de données) + TimeSeriesSplit cross-validation
+
+### 4. Predict — Projections Futures
+
+- Prédictions historiques sur le jeu de test
+- **Projections 2024-2028** avec intervalles de confiance (±2σ croissant)
+- Analyse d'impact énergie ↔ développement
+
+### 5. Dashboard BI — 5 onglets interactifs
+
+| Onglet | Contenu |
+|---|---|
+| ⚡ **Énergie** | Évolution consommation, accès, gap urbain/rural, émissions CO2 |
+| 🏥 **Impact Social** | Corrélation énergie ↔ mortalité, accès eau, espérance de vie |
+| 💰 **Économie** | PIB, croissance, dette, IDE vs énergie |
+| 🤖 **Prédictions** | Historique + projections 2024-2028 avec intervalles de confiance |
+| 🌍 **Benchmark UEMOA** | Radar comparatif, classements, dernières valeurs |
 
 ## Installation
 
 ```bash
+# Cloner le projet
+git clone https://github.com/Theobaw01/energy-prediction-gabon.git
+cd energy-prediction-gabon
+
+# Installer les dépendances
 pip install -r requirements.txt
 ```
 
 ## Utilisation
 
 ```bash
-# 1. Exécuter le pipeline ETL
+# 1. Extraction des données (API Banque Mondiale)
 python src/etl/extract.py
+
+# 2. Transformation & feature engineering
 python src/etl/transform.py
 
-# 2. Entraîner les modèles
+# 3. Entraînement des modèles (3 cibles × 5 algorithmes)
 python src/models/train.py
 
-# 3. Lancer le dashboard
+# 4. Génération des prédictions & projections 2024-2028
+python src/models/predict.py
+
+# 5. Lancement du dashboard interactif
 streamlit run dashboard/app.py
 ```
+
+Le dashboard sera accessible sur **http://localhost:8501**.
+
+## Contexte BCEAO / UEMOA
+
+Ce projet s'inscrit dans les missions de la **Banque Centrale des États de l'Afrique de l'Ouest** en matière de :
+- **Analyse de données macroéconomiques** de la zone UEMOA
+- **Modélisation prédictive** pour appuyer les décisions de politique économique
+- **Suivi des indicateurs de développement** (énergie, santé, économie)
+- **Intelligence artificielle appliquée** à l'analyse des données régionales
 
 ## Auteur
 
