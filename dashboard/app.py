@@ -77,6 +77,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 def load():
     d = {}
     for k, f in [("df", "data/processed/energy_data_processed.csv"),
+                  ("raw", "data/raw/energy_data_raw.csv"),
                   ("pred", "data/predictions/predictions.csv"),
                   ("proj", "data/predictions/projections.csv"),
                   ("res", "models/results.csv")]:
@@ -111,6 +112,7 @@ if "df" not in data:
     st.stop()
 
 df = data["df"]
+raw = data.get("raw")
 pred = data.get("pred")
 proj = data.get("proj")
 res = data.get("res")
@@ -197,7 +199,7 @@ if not tg.empty:
 # ─────────────────────────────────────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────────────────────────────────────
-t1, t2, t3 = st.tabs(["Hier — Tendances", "Aujourd'hui — Analyse", "Demain — Projections"])
+t1, t2, t3, t4 = st.tabs(["Hier — Tendances", "Aujourd'hui — Analyse", "Demain — Projections 2045", "Donnees"])
 
 # ── TAB 1 : HIER ────────────────────────────────────────────────────────────
 with t1:
@@ -504,6 +506,74 @@ with t3:
         fig.update_layout(title="R2 par modele", yaxis_title="R2", yaxis_range=[0, 1.08],
                           template=TMPL, height=320, margin=dict(t=40))
         st.plotly_chart(fig, key="model_cmp")
+
+# ── TAB 4 : DONNEES ──────────────────────────────────────────────────────────
+with t4:
+    st.markdown('<div class="sec">Donnees utilisees dans le pipeline</div>', unsafe_allow_html=True)
+
+    d_sub = st.tabs(["Donnees brutes (API)", "Donnees transformees", "Predictions", "Projections"])
+
+    with d_sub[0]:
+        st.markdown("Donnees extraites de l'API Banque Mondiale (WDI) — avant transformation.")
+        if raw is not None and not raw.empty:
+            st.markdown(f"**{len(raw):,} enregistrements** | {int(raw['year'].min())} — {int(raw['year'].max())}")
+            raw_focus = raw[raw["country_code"]==focus] if "country_code" in raw.columns else raw
+            st.dataframe(raw_focus, height=450)
+            st.download_button("Telecharger brut (CSV)", raw.to_csv(index=False).encode(), "donnees_brutes.csv", key="dl_raw")
+        else:
+            st.info("Fichier brut non disponible.")
+
+    with d_sub[1]:
+        st.markdown("Donnees apres pivot, nettoyage et feature engineering.")
+        if not df.empty:
+            df_focus = dff[dff["country_code"]==focus].sort_values("year")
+            st.markdown(f"**{len(df_focus)} lignes x {len(df_focus.columns)} colonnes** — {focus_name}")
+
+            col_labels = {
+                "year": "Annee", "country_code": "Code", "country_name": "Pays",
+                "SP.POP.TOTL": "Population", "SP.POP.GROW": "Croiss. pop (%)",
+                "SP.URB.TOTL.IN.ZS": "Urbanisation (%)",
+                "EG.USE.ELEC.KH.PC": "kWh/hab", "EG.ELC.ACCS.ZS": "Acces electr. (%)",
+                "EG.ELC.ACCS.UR.ZS": "Acces urbain (%)", "EG.ELC.ACCS.RU.ZS": "Acces rural (%)",
+                "NY.GDP.PCAP.CD": "PIB/hab (USD)", "conso_totale_gwh": "Demande (GWh)",
+                "gap_acces_urb_rur": "Ecart urb/rur", "pop_urbaine": "Pop. urbaine",
+                "intensite_kwh_pib": "Intensite kWh/PIB",
+            }
+            disp_df = df_focus.copy()
+            disp_df = disp_df.rename(columns={c: col_labels.get(c, c) for c in disp_df.columns})
+            st.dataframe(disp_df, height=450)
+            st.download_button("Telecharger transforme (CSV)", df_focus.to_csv(index=False).encode(), "donnees_transformees.csv", key="dl_proc")
+
+            # Stats descriptives
+            with st.expander("Statistiques descriptives", expanded=False):
+                num_cols = df_focus.select_dtypes(include=[np.number]).columns.tolist()
+                st.dataframe(df_focus[num_cols].describe().T.round(2), height=350)
+
+    with d_sub[2]:
+        st.markdown("Predictions du modele sur les donnees historiques (validation).")
+        if pred is not None and not pred.empty:
+            pred_focus = pred[pred["country_code"]==focus]
+            st.markdown(f"**{len(pred_focus)} lignes** — {focus_name}")
+            disp_pred = pred_focus[["year", "actual", "predicted", "error", "error_pct"]].copy()
+            disp_pred.columns = ["Annee", "Observe (GWh)", "Predit (GWh)", "Erreur", "Erreur (%)"]
+            st.dataframe(disp_pred, height=400)
+            st.download_button("Telecharger predictions (CSV)", pred.to_csv(index=False).encode(), "predictions.csv", key="dl_pred")
+        else:
+            st.info("Predictions non disponibles.")
+
+    with d_sub[3]:
+        st.markdown("Projections futures du modele IA (2024 — 2045).")
+        if proj is not None and not proj.empty:
+            proj_focus = proj[proj["country_code"]==focus].sort_values("year")
+            st.markdown(f"**{len(proj_focus)} annees projetees** — {focus_name}")
+            disp_proj = proj_focus[["year", "predicted_gwh", "ci_lower", "ci_upper", "pop_projected"]].copy()
+            disp_proj.columns = ["Annee", "Demande (GWh)", "IC bas", "IC haut", "Population"]
+            disp_proj["Population"] = disp_proj["Population"].apply(
+                lambda v: f"{v/1e6:.2f} M" if pd.notna(v) else "—")
+            st.dataframe(disp_proj, height=500)
+            st.download_button("Telecharger projections (CSV)", proj.to_csv(index=False).encode(), "projections.csv", key="dl_proj")
+        else:
+            st.info("Projections non disponibles.")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FOOTER
