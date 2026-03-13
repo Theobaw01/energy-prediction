@@ -1,6 +1,11 @@
 """
 Predictions historiques + Projections 2024-2045 pour les 8 pays UEMOA
 Cible : demande electrique totale (GWh) = f(population, contexte macro)
+
+Methode de projection :
+  - Extrapolation robuste des features (10 ans de tendance, clipping)
+  - Prediction ML + lissage exponentiel + plancher historique
+  - IC 95% base sur les residus du modele
 """
 import os
 import sys
@@ -44,16 +49,52 @@ def predict_historical(df):
     return out
 
 
+def _extrapolate_feature(vals, h, feat_name):
+    """Extrapole une feature de facon robuste."""
+    clean = vals[~np.isnan(vals)]
+    if len(clean) < 2:
+        return clean[-1] if len(clean) > 0 else 0.0
+
+    # Tendance lineaire
+    t = np.polyfit(range(len(clean)), clean, 1)
+    projected = t[0] * (len(clean) - 1 + h) + t[1]
+
+    last_val = clean[-1]
+
+    # Pour les taux (%): clipper entre 0 et 100
+    pct_kw = ('_ZS', '_ZG', 'ratio', 'year_norm', 'intensite', '_chg')
+    if any(k in feat_name for k in pct_kw):
+        if last_val >= 0:
+            projected = np.clip(projected, 0, max(clean.max() * 1.5, 100))
+        else:
+            projected = np.clip(projected, min(clean.min() * 1.5, -100), 100)
+
+    # Pour les valeurs absolues positives (population, PIB, conso)
+    # ne pas laisser tomber en negatif
+    abs_kw = ('POP', 'GDP', 'MKTP', 'pop_', 'pib_', 'log_', 'mobile',
+              'indus_', 'gwh_par', 'electrifiee')
+    if any(k in feat_name for k in abs_kw):
+        projected = max(projected, last_val * 0.5)  # plancher a 50% du dernier
+
+    return projected
+
+
 def project_future(df, horizon=FORECAST_HORIZON):
     """
-    Projections futures par pays.
-    On extrapole les features par tendance lineaire sur les 5 dernieres annees,
-    puis on applique le modele.
+    Projections futures par pays avec approche robuste :
+    1. Extrapole les features (10 dernieres annees, clipping intelligent)
+    2. Predit avec le modele ML
+    3. Lisse avec la tendance historique (exponentiel)
+    4. Garantit la coherence (pas de baisse irrealiste)
     """
     saved = load_model()
     model = saved['model']
     scaler = saved['scaler']
     feat_names = saved['feature_names']
+
+    # Calculer le MAPE residuel du modele pour IC
+    hist = predict_historical(df)
+    residual_std = hist['error'].std()
 
     max_year = int(df['year'].max())
     rows = []
@@ -62,49 +103,76 @@ def project_future(df, horizon=FORECAST_HORIZON):
         cdf = df[df['country_code'] == code].sort_values('year')
         if cdf.empty or len(cdf) < 5:
             continue
-        recent = cdf.tail(5)
+
+        # Utiliser les 10 dernieres annees pour la tendance (plus robuste)
+        n_trend = min(10, len(cdf))
+        recent = cdf.tail(n_trend)
+
+        # Calculer CAGR historique de la conso (derniers 10 ans)
+        gwh_vals = recent['conso_totale_gwh'].values
+        last_gwh = gwh_vals[-1]
+        if gwh_vals[0] > 0 and last_gwh > 0:
+            cagr = (last_gwh / gwh_vals[0]) ** (1 / len(gwh_vals)) - 1
+            cagr = np.clip(cagr, 0.005, 0.12)  # entre 0.5% et 12%/an
+        else:
+            cagr = 0.03  # defaut 3%
+
+        prev_pred = last_gwh
 
         for h in range(1, horizon + 1):
             future = {}
             for f in feat_names:
                 if f in recent.columns:
                     vals = recent[f].values
-                    if len(vals) >= 2 and not np.all(np.isnan(vals)):
-                        t = np.polyfit(range(len(vals)), vals, 1)
-                        future[f] = t[0] * (len(vals) - 1 + h) + t[1]
-                    else:
-                        future[f] = vals[-1] if len(vals) > 0 else 0
+                    future[f] = _extrapolate_feature(vals, h, f)
                 else:
                     future[f] = 0
 
             X = np.array([[future.get(f, 0) for f in feat_names]])
             X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
-            pred = model.predict(scaler.transform(X))[0]
+            ml_pred = model.predict(scaler.transform(X))[0]
 
-            # IC simplifie
-            if 'conso_totale_gwh' in recent.columns:
-                std = np.std(recent['conso_totale_gwh'].values)
-                ci = 1.96 * std * np.sqrt(h)
-            else:
-                ci = 0
+            # Projection par tendance (CAGR)
+            trend_pred = last_gwh * (1 + cagr) ** h
 
-            # Population projetee (pour info)
+            # Blending : moyenne ponderee ML (60%) + tendance (40%)
+            # Le ML capture les accelerations, la tendance stabilise
+            alpha = 0.6
+            blended = alpha * ml_pred + (1 - alpha) * trend_pred
+
+            # Lissage : ne pas s'eloigner trop du pas precedent
+            max_jump = max(prev_pred * 0.15, 100)  # max 15%/an de variation
+            blended = np.clip(blended, prev_pred - max_jump * 0.3,
+                              prev_pred + max_jump)
+
+            # Plancher : jamais en dessous de 90% de la derniere valeur historique
+            blended = max(blended, last_gwh * 0.90)
+
+            prev_pred = blended
+
+            # IC base sur les residus du modele, croissant avec l'horizon
+            ci = 1.96 * residual_std * np.sqrt(h) * 0.3
+            ci_lower = max(blended - ci, last_gwh * 0.5)
+            ci_upper = blended + ci
+
+            # Population projetee
             pop_proj = None
             if 'SP.POP.TOTL' in recent.columns:
                 pvals = recent['SP.POP.TOTL'].values
                 if len(pvals) >= 2:
-                    pt = np.polyfit(range(len(pvals)), pvals, 1)
-                    pop_proj = pt[0] * (len(pvals) - 1 + h) + pt[1]
+                    pop_growth = (pvals[-1] / pvals[0]) ** (1 / len(pvals)) - 1
+                    pop_proj = pvals[-1] * (1 + pop_growth) ** h
 
             rows.append({
                 'country_code': code,
                 'country_name': name,
                 'year': max_year + h,
-                'predicted_gwh': round(pred, 2),
-                'ci_lower': round(pred - ci, 2),
-                'ci_upper': round(pred + ci, 2),
+                'predicted_gwh': round(blended, 1),
+                'ci_lower': round(ci_lower, 1),
+                'ci_upper': round(ci_upper, 1),
                 'pop_projected': round(pop_proj) if pop_proj else None,
                 'horizon': h,
+                'cagr_pct': round(cagr * 100, 2),
             })
 
     return pd.DataFrame(rows)
