@@ -12,7 +12,7 @@ import streamlit as st
 # ── Config ───────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="IA Energie UEMOA 2045",
-    page_icon="⚡",
+    page_icon="E",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -85,6 +85,8 @@ section[data-testid="stSidebar"] *{color:#1A1A1A;}
 }
 .hdr h1{color:#1A1A1A;margin:0;font-size:1.4em;font-weight:800;letter-spacing:-.02em;}
 .hdr .sub{color:#666666;font-size:.78em;margin-top:4px;}
+.hdr .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.hdr .tags .tag{background:rgba(10,102,194,.07);color:#0A66C2;border:1px solid rgba(10,102,194,.18);border-radius:6px;padding:2px 10px;font-size:.62em;font-weight:700;letter-spacing:.02em;}
 
 /* KPI */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px;}
@@ -215,8 +217,8 @@ cn_map = df_all.drop_duplicates("country_code").set_index("country_code")["count
 # ── SIDEBAR ──────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""<div class="sb-profile">
-        <div class="sb-name">⚡ Energy Prediction UEMOA</div>
-        <div class="sb-role">Projet IA — Candidature BCEAO</div>
+        <div class="sb-name">Energy Prediction UEMOA</div>
+        <div class="sb-role">Projet Data Engineering & IA</div>
         <div class="sb-desc">Pipeline complet de prediction de la demande electrique
         pour les 8 pays de l'UEMOA, horizon 2045.</div>
         <div class="sb-badge-row">
@@ -226,14 +228,14 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("### 🌍 Pays")
+    st.markdown("### Pays")
     sel_cc = st.selectbox("Selectionner un pays", cc_list,
         format_func=lambda c: f"{FLAGS.get(c,'')} {cn_map.get(c,c)}",
         index=cc_list.index('TG') if 'TG' in cc_list else 0, key="sel_cc")
     sel_name = cn_map.get(sel_cc, sel_cc)
     sel_flag = FLAGS.get(sel_cc, '')
 
-    st.markdown("### 📅 Periode")
+    st.markdown("### Periode")
     ymin_h, ymax_h = int(df_all["year"].min()), int(df_all["year"].max())
     yr = st.slider("Annees historiques", ymin_h, ymax_h, (ymin_h, ymax_h), key="yr")
 
@@ -241,7 +243,7 @@ with st.sidebar:
     n_feat = len(df_all.columns)
     best_r2 = res.sort_values("r2",ascending=False).iloc[0]["r2"] if res is not None and not res.empty else 0
 
-    st.markdown("### 📊 Pipeline")
+    st.markdown("### Pipeline")
     st.markdown(f"""
     <div class="sb-stat"><span class="sb-k">Observations</span><span class="sb-v">{n_raw:,}</span></div>
     <div class="sb-stat"><span class="sb-k">Pays</span><span class="sb-v">{len(cc_list)}</span></div>
@@ -251,7 +253,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.divider()
-    st.markdown("### 📥 Exports")
+    st.markdown("### Exports")
     if raw_all is not None:
         st.download_button("Donnees brutes CSV", raw_all.to_csv(index=False).encode(),
                            "donnees_brutes_uemoa.csv", key="dl1")
@@ -277,8 +279,21 @@ bst = res.sort_values("r2",ascending=False).iloc[0] if res is not None and not r
 # ══════════════════════════════════════════════════════════════════════
 st.markdown(f"""
 <div class="hdr">
-    <h1>⚡ Prevision de la Demande Electrique — Zone UEMOA</h1>
-    <div class="sub">Pipeline IA complet · 8 pays · {n_feat} features · 1990-2023 → 2045 · Candidature BCEAO</div>
+    <div style="color:#999999;font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Projet Data Engineering & Developpement en Intelligence Artificielle</div>
+    <h1>Prevision de la Demande Electrique — Zone UEMOA</h1>
+    <div class="sub">Pipeline ETL & IA complet · 8 pays · {n_feat} features · 1990-2023 → 2045 · Maitrise de l'analyse de donnees</div>
+    <div class="tags">
+        <span class="tag">Pipeline ETL / ELT</span>
+        <span class="tag">Machine Learning</span>
+        <span class="tag">Analyse Predictive</span>
+        <span class="tag">Python & Librairies IA</span>
+        <span class="tag">Tableaux de Bord (BI)</span>
+        <span class="tag">Modelisation de Donnees</span>
+    </div>
+    <div style="margin-top:8px;font-size:.7em;">
+        <span style="color:#666666;">Sources de donnees :</span>
+        <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.POP.TOTL?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;font-weight:600;">Banque Mondiale (API WDI)</a>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -286,18 +301,18 @@ st.markdown(f"""
 kpi = '<div class="kpi-row">'
 if "SP.POP.TOTL" in tg.columns:
     p1v=last["SP.POP.TOTL"]; g=chg(first["SP.POP.TOTL"],p1v)
-    kpi+=f'<div class="kpi"><div class="kpi-lb">👥 Population</div><div class="kpi-vl">{fmt(p1v)}</div><div class="kpi-dt up">+{g:.0f}% depuis {yr[0]}</div></div>'
+    kpi+=f'<div class="kpi"><div class="kpi-lb">Population</div><div class="kpi-vl">{fmt(p1v)}</div><div class="kpi-dt up">+{g:.0f}% depuis {yr[0]}</div></div>'
 if "conso_totale_gwh" in tg.columns:
     g1=last["conso_totale_gwh"]; g=chg(first["conso_totale_gwh"] if first["conso_totale_gwh"]>0 else 1,g1)
-    kpi+=f'<div class="kpi"><div class="kpi-lb">⚡ Demande</div><div class="kpi-vl">{fmt(g1,"GWh")}</div><div class="kpi-dt up">+{g:.0f}% depuis {yr[0]}</div></div>'
+    kpi+=f'<div class="kpi"><div class="kpi-lb">Demande</div><div class="kpi-vl">{fmt(g1,"GWh")}</div><div class="kpi-dt up">+{g:.0f}% depuis {yr[0]}</div></div>'
 if "EG.ELC.ACCS.ZS" in tg.columns:
     a1=last["EG.ELC.ACCS.ZS"]
-    kpi+=f'<div class="kpi"><div class="kpi-lb">🔌 Acces electr.</div><div class="kpi-vl">{a1:.1f}%</div><div class="kpi-dt up">{sel_name}</div></div>'
+    kpi+=f'<div class="kpi"><div class="kpi-lb">Acces electr.</div><div class="kpi-vl">{a1:.1f}%</div><div class="kpi-dt up">{sel_name}</div></div>'
 if proj is not None and not proj.empty:
     r45=proj[proj["year"]==proj["year"].max()].iloc[0]
-    kpi+=f'<div class="kpi"><div class="kpi-lb">🔮 Projection {int(r45["year"])}</div><div class="kpi-vl">{fmt(r45["predicted_gwh"],"GWh")}</div><div class="kpi-dt up">Horizon IA</div></div>'
+    kpi+=f'<div class="kpi"><div class="kpi-lb">Projection {int(r45["year"])}</div><div class="kpi-vl">{fmt(r45["predicted_gwh"],"GWh")}</div><div class="kpi-dt up">Horizon IA</div></div>'
 if bst is not None:
-    kpi+=f'<div class="kpi"><div class="kpi-lb">🧠 Precision IA</div><div class="kpi-vl">R² {bst["r2"]:.3f}</div><div class="kpi-dt up">{bst["model"]}</div></div>'
+    kpi+=f'<div class="kpi"><div class="kpi-lb">Precision IA</div><div class="kpi-vl">R² {bst["r2"]:.3f}</div><div class="kpi-dt up">{bst["model"]}</div></div>'
 kpi+='</div>'
 st.markdown(kpi, unsafe_allow_html=True)
 
@@ -326,7 +341,7 @@ st.markdown(f"""<div class="pipe-row">
 # ══════════════════════════════════════════════════════════════════════
 #  1. DEMANDE ELECTRIQUE  +  PERFORMANCE MODELES
 # ══════════════════════════════════════════════════════════════════════
-st.markdown("""<div class="sec"><span class="tt">⚡ Demande electrique UEMOA  &  🏆 Performance des modeles</span></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec"><span class="tt">Demande electrique UEMOA & Performance des modeles</span></div>""", unsafe_allow_html=True)
 
 col_a, col_b = st.columns(2)
 with col_a:
@@ -371,7 +386,7 @@ if "conso_totale_gwh" in df_all.columns:
         best_name = bst["model"] if bst is not None else "—"
         best_r2_val = bst["r2"] if bst is not None else 0
         st.markdown(f"""<div class="interp">
-            <div class="interp-hd">💡 Ce qu'il faut retenir</div>
+            <div class="interp-hd">Ce qu'il faut retenir</div>
             <p><b>A gauche</b> : l'evolution de la demande electrique pour les 8 pays UEMOA.
             {sel_flag} <span class="h">{sel_name}</span> est mis en avant.
             En {ymax_h}, il consomme <span class="v">{sel_gwh:,.0f} GWh</span>
@@ -389,7 +404,7 @@ if "conso_totale_gwh" in df_all.columns:
 # ══════════════════════════════════════════════════════════════════════
 #  2. POPULATION vs DEMANDE  +  ACCES URBAIN/RURAL
 # ══════════════════════════════════════════════════════════════════════
-st.markdown(f"""<div class="sec"><span class="tt">👥 Population vs Demande — {sel_flag} {sel_name}  &  🏙️ Acces electrique</span></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="sec"><span class="tt">Population vs Demande — {sel_flag} {sel_name} & Acces electrique</span></div>""", unsafe_allow_html=True)
 
 col_c, col_d = st.columns(2)
 with col_c:
@@ -437,7 +452,7 @@ with col_d:
         urb = tg["EG.ELC.ACCS.UR.ZS"].iloc[-1]; rur = tg["EG.ELC.ACCS.RU.ZS"].iloc[-1]
 
 st.markdown(f"""<div class="interp">
-    <div class="interp-hd">💡 Population, demande et acces electrique</div>
+    <div class="interp-hd">Population, demande et acces electrique</div>
     <p><b>A gauche</b> : les barres bleues = population, la courbe verte = demande electrique.
     La population de {sel_name} a augmente de <span class="v">+{pop_c:.0f}%</span> tandis que la demande
     a bondi de <span class="v">+{gwh_c:.0f}%</span>.
@@ -456,7 +471,7 @@ st.markdown(f"""<div class="interp">
 # ══════════════════════════════════════════════════════════════════════
 #  3. FEATURE IMPORTANCE  +  CROSS-VALIDATION
 # ══════════════════════════════════════════════════════════════════════
-st.markdown("""<div class="sec"><span class="tt">📋 Variables cles du modele  &  🔄 Fiabilite temporelle</span></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec"><span class="tt">Variables cles du modele & Fiabilite temporelle</span></div>""", unsafe_allow_html=True)
 
 col_e, col_f = st.columns(2)
 with col_e:
@@ -495,7 +510,7 @@ with col_f:
 if fi_df is not None and not fi_df.empty:
     top3=[fi_df.iloc[i]["feature"] for i in range(min(3,len(fi_df)))]
     st.markdown(f"""<div class="interp">
-        <div class="interp-hd">💡 Variables cles et robustesse du modele</div>
+        <div class="interp-hd">Variables cles et robustesse du modele</div>
         <p><b>A gauche</b> : les variables que le modele utilise le plus pour predire.
         Les 3 plus importantes : <span class="b">{top3[0]}</span>,
         <span class="b">{top3[1]}</span> et <span class="b">{top3[2]}</span>.
@@ -513,7 +528,7 @@ if fi_df is not None and not fi_df.empty:
 #  4. VALIDATION : OBSERVE vs PREDIT
 # ══════════════════════════════════════════════════════════════════════
 if pred is not None and not pred.empty:
-    st.markdown(f"""<div class="sec"><span class="tt">✅ Realite vs Predictions — {sel_flag} {sel_name}</span>
+    st.markdown(f"""<div class="sec"><span class="tt">Realite vs Predictions — {sel_flag} {sel_name}</span>
         <span class="badge">Validation</span></div>""", unsafe_allow_html=True)
 
     fig = go.Figure()
@@ -536,7 +551,7 @@ if pred is not None and not pred.empty:
     mae=pred["error"].abs().mean()
     mape_v=pred["error_pct"].abs().mean() if "error_pct" in pred.columns else 0
     st.markdown(f"""<div class="interp">
-        <div class="interp-hd">💡 Le modele colle-t-il a la realite ?</div>
+        <div class="interp-hd">Le modele colle-t-il a la realite ?</div>
         <p>La courbe verte = donnees reelles, la courbe bleue pointillee = predictions du modele,
         les barres transparentes = ecart entre les deux.<br><br>
         Pour {sel_flag} {sel_name}, l'erreur moyenne est de <span class="v">{mae:,.0f} GWh</span>
@@ -557,18 +572,18 @@ if proj is not None and not proj.empty:
     gr_tot = chg(last_gwh, lp["predicted_gwh"]) if last_gwh>0 else 0
     cagr_v = proj_s["cagr_pct"].iloc[0] if "cagr_pct" in proj_s.columns else 0
 
-    st.markdown(f"""<div class="sec"><span class="tt">🔮 Projection 2045 — {sel_flag} {sel_name}</span>
+    st.markdown(f"""<div class="sec"><span class="tt">Projection 2045 — {sel_flag} {sel_name}</span>
         <span class="badge">IA + CAGR</span></div>""", unsafe_allow_html=True)
 
     # Prediction cards
     st.markdown(f"""<div class="pred-row">
-        <div class="pred c1"><div class="pred-lb">📈 Croissance totale</div>
+        <div class="pred c1"><div class="pred-lb">Croissance totale</div>
             <div class="pred-vl t1">+{gr_tot:.0f}%</div>
             <div class="pred-sub">{ymax_h} → {int(lp["year"])}</div></div>
-        <div class="pred c2"><div class="pred-lb">🎯 Demande projetee</div>
+        <div class="pred c2"><div class="pred-lb">Demande projetee</div>
             <div class="pred-vl t2">{lp["predicted_gwh"]:,.0f}</div>
             <div class="pred-sub">GWh en {int(lp["year"])}</div></div>
-        <div class="pred c3"><div class="pred-lb">⚡ CAGR</div>
+        <div class="pred c3"><div class="pred-lb">CAGR</div>
             <div class="pred-vl t3">{cagr_v:.1f}%</div>
             <div class="pred-sub">croissance annuelle moy.</div></div>
     </div>""", unsafe_allow_html=True)
@@ -606,7 +621,7 @@ if proj is not None and not proj.empty:
     st.plotly_chart(fig, key="proj_main")
 
     st.markdown(f"""<div class="interp">
-        <div class="interp-hd">💡 Comment lire cette projection ?</div>
+        <div class="interp-hd">Comment lire cette projection ?</div>
         <p>La <span class="v">courbe verte</span> (a gauche de la ligne pointillee) = donnees reelles passees.
         La <span class="b">courbe bleue</span> (a droite) = prediction IA pour les 22 prochaines annees.
         La <span class="h">zone bleue transparente</span> = intervalle de confiance a 95%.<br><br>
@@ -622,7 +637,7 @@ if proj is not None and not proj.empty:
 #  6. COMPARAISON 8 PAYS — PROJECTIONS
 # ══════════════════════════════════════════════════════════════════════
 if proj_all is not None and not proj_all.empty:
-    st.markdown(f"""<div class="sec"><span class="tt">🌍 Comparaison 8 pays — Historique + Projections 2045</span></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="sec"><span class="tt">Comparaison 8 pays — Historique + Projections 2045</span></div>""", unsafe_allow_html=True)
 
     fig = go.Figure()
     for i, cc in enumerate(cc_list):
@@ -653,7 +668,7 @@ if proj_all is not None and not proj_all.empty:
         pos_p = list(prk["country_code"]).index(sel_cc)+1 if sel_cc in list(prk["country_code"]) else "?"
         top_p = prk.iloc[0]
         st.markdown(f"""<div class="interp">
-            <div class="interp-hd">💡 Qui domine en 2045 ?</div>
+            <div class="interp-hd">Qui domine en 2045 ?</div>
             <p>Trait plein = historique, pointilles = projections.
             En {int(last_yr_p)}, {sel_flag} <span class="h">{sel_name}</span> se placerait
             en <span class="b">position #{pos_p}</span> sur {len(prk)} pays.
@@ -669,7 +684,7 @@ if proj_all is not None and not proj_all.empty:
 # ══════════════════════════════════════════════════════════════════════
 #  7. EXPLORATEUR D'INDICATEURS (compact)
 # ══════════════════════════════════════════════════════════════════════
-with st.expander(f"🔍 Explorer un indicateur — {sel_flag} {sel_name}", expanded=False):
+with st.expander(f"Explorer un indicateur — {sel_flag} {sel_name}", expanded=False):
     if raw_all is not None and not raw_all.empty:
         raw_f = raw_all[raw_all["year"].between(*yr)]
         ind_list = sorted(raw_f["indicator_code"].unique().tolist())
@@ -696,21 +711,42 @@ with st.expander(f"🔍 Explorer un indicateur — {sel_flag} {sel_name}", expan
 # ══════════════════════════════════════════════════════════════════════
 #  8. SOURCES & DONNEES
 # ══════════════════════════════════════════════════════════════════════
-st.markdown("""<div class="sec"><span class="tt">📂 Sources, Donnees & Resultats</span></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec"><span class="tt">Sources, Donnees & Resultats</span></div>""", unsafe_allow_html=True)
 
 st.markdown("""<div class="interp">
-    <div class="interp-hd">🔗 Sources des donnees</div>
-    <p>Toutes les donnees proviennent de l'<span class="b">API officielle de la Banque Mondiale</span>
-    (World Development Indicators — WDI) :<br>
-    • <a href="https://data.worldbank.org" target="_blank" style="color:#0A66C2;font-weight:600;">data.worldbank.org</a>
-    — portail principal<br>
-    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.USE.ELEC.KH.PC?format=json&per_page=5000&date=1990:2023" target="_blank" style="color:#0A66C2;font-weight:600;">API WDI (exemple)</a>
-    — endpoint utilise pour l'extraction<br>
-    • <a href="https://github.com/Theobaw01/energy-prediction-togo" target="_blank" style="color:#0A66C2;font-weight:600;">GitHub — Code source du projet</a></p>
+    <div class="interp-hd">Source des donnees — API Banque Mondiale (WDI)</div>
+    <p>Toutes les donnees sont extraites automatiquement via l'<span class="b">API REST de la Banque Mondiale</span>
+    (World Development Indicators). Voici les <b>21 liens exacts</b> utilises dans le script d'extraction :<br><br>
+    <b>Demographie (7 indicateurs) :</b><br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.POP.TOTL?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.POP.TOTL</a> — Population totale<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.POP.GROW?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.POP.GROW</a> — Croissance demographique (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.URB.TOTL.IN.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.URB.TOTL.IN.ZS</a> — Taux d'urbanisation (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.DYN.TFRT.IN?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.DYN.TFRT.IN</a> — Taux de fecondite<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.DYN.LE00.IN?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.DYN.LE00.IN</a> — Esperance de vie<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.POP.0014.TO.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.POP.0014.TO.ZS</a> — Population 0-14 ans (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SP.POP.1564.TO.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SP.POP.1564.TO.ZS</a> — Population 15-64 ans (%)<br><br>
+    <b>Energie (6 indicateurs) :</b><br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.USE.ELEC.KH.PC?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.USE.ELEC.KH.PC</a> — Consommation electrique (kWh/hab)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.ELC.ACCS.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.ELC.ACCS.ZS</a> — Acces a l'electricite (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.ELC.ACCS.UR.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.ELC.ACCS.UR.ZS</a> — Acces urbain (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.ELC.ACCS.RU.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.ELC.ACCS.RU.ZS</a> — Acces rural (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.FEC.RNEW.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.FEC.RNEW.ZS</a> — Energie renouvelable (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/EG.USE.PCAP.KG.OE?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">EG.USE.PCAP.KG.OE</a> — Energie (kg petrole eq./hab)<br><br>
+    <b>Economie (5 indicateurs) :</b><br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/NY.GDP.PCAP.CD?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">NY.GDP.PCAP.CD</a> — PIB par habitant (USD)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/NY.GDP.MKTP.CD?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">NY.GDP.MKTP.CD</a> — PIB total (USD)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/NY.GDP.MKTP.KD.ZG?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">NY.GDP.MKTP.KD.ZG</a> — Croissance PIB (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/NV.IND.TOTL.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">NV.IND.TOTL.ZS</a> — Part industrie (% PIB)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/FP.CPI.TOTL.ZG?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">FP.CPI.TOTL.ZG</a> — Inflation IPC (%)<br><br>
+    <b>Social / Infrastructure (3 indicateurs) :</b><br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/IT.CEL.SETS.P2?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">IT.CEL.SETS.P2</a> — Abonnements mobile (/100 hab)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SE.ADT.LITR.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SE.ADT.LITR.ZS</a> — Alphabetisation adultes (%)<br>
+    • <a href="https://api.worldbank.org/v2/country/TGO;SEN;CIV;BEN;BFA;MLI;NER;GNB/indicator/SL.UEM.TOTL.ZS?date=1990:2023&format=json&per_page=5000" target="_blank" style="color:#0A66C2;">SL.UEM.TOTL.ZS</a> — Chomage (%)<br><br>
+    <b>Code source :</b> <a href="https://github.com/Theobaw01/energy-prediction-togo" target="_blank" style="color:#0A66C2;font-weight:600;">github.com/Theobaw01/energy-prediction-togo</a></p>
 </div>""", unsafe_allow_html=True)
 
 # Données brutes
-with st.expander("📄 Donnees brutes (non traitees)", expanded=False):
+with st.expander("Donnees brutes (non traitees)", expanded=False):
     if raw_all is not None and not raw_all.empty:
         raw_disp = raw_all[raw_all["country_code"]==sel_cc].sort_values(["indicator_code","year"])
         st.markdown(f'<div class="ins"><b>{len(raw_disp):,}</b> observations brutes pour {sel_flag} {sel_name} · <b>{len(raw_all["indicator_code"].unique())}</b> indicateurs · format long (1 ligne = 1 indicateur × 1 annee × 1 pays)</div>', unsafe_allow_html=True)
@@ -719,13 +755,13 @@ with st.expander("📄 Donnees brutes (non traitees)", expanded=False):
         st.info("Donnees brutes non disponibles.")
 
 # Données traitées
-with st.expander("⚙️ Donnees traitees (apres feature engineering)", expanded=False):
+with st.expander("Donnees traitees (apres feature engineering)", expanded=False):
     tg_disp = df_all[df_all["country_code"]==sel_cc].sort_values("year")
     st.markdown(f'<div class="ins"><b>{len(tg_disp)}</b> lignes × <b>{len(tg_disp.columns)}</b> colonnes pour {sel_flag} {sel_name} · Inclut lags, moyennes mobiles, ratios, log-transforms, encodage pays</div>', unsafe_allow_html=True)
     st.dataframe(tg_disp, height=300, key="dt_proc")
 
 # Prédictions historiques
-with st.expander("✅ Predictions historiques (observe vs predit)", expanded=False):
+with st.expander("Predictions historiques (observe vs predit)", expanded=False):
     if pred is not None and not pred.empty:
         st.markdown(f'<div class="ins">Comparaison valeurs reelles / predictions du modele pour {sel_flag} {sel_name} sur la periode de test</div>', unsafe_allow_html=True)
         st.dataframe(pred, height=300, key="dt_pred")
@@ -733,7 +769,7 @@ with st.expander("✅ Predictions historiques (observe vs predit)", expanded=Fal
         st.info("Predictions non disponibles.")
 
 # Projections
-with st.expander("🔮 Projections 2024-2045", expanded=False):
+with st.expander("Projections 2024-2045", expanded=False):
     if proj is not None and not proj.empty:
         st.markdown(f'<div class="ins">Projections IA pour {sel_flag} {sel_name} · {len(proj)} annees · Inclut intervalle de confiance (IC 95%) et CAGR</div>', unsafe_allow_html=True)
         st.dataframe(proj.sort_values("year"), height=300, key="dt_proj")
@@ -741,7 +777,7 @@ with st.expander("🔮 Projections 2024-2045", expanded=False):
         st.info("Projections non disponibles.")
 
 # Résultats modèles
-with st.expander("🧠 Resultats des modeles", expanded=False):
+with st.expander("Resultats des modeles", expanded=False):
     if res is not None and not res.empty:
         st.markdown(f'<div class="ins"><b>{len(res)}</b> modeles compares · Metriques : R², RMSE, MAE, MAPE · Meilleur : <b>{bst["model"]}</b> (R²={bst["r2"]:.3f})</div>', unsafe_allow_html=True)
         st.dataframe(res.sort_values("r2", ascending=False), height=250, key="dt_res")
@@ -754,7 +790,7 @@ with st.expander("🧠 Resultats des modeles", expanded=False):
 # ══════════════════════════════════════════════════════════════════════
 st.markdown("""
 <div class="foot">
-    <b>Candidature BCEAO — Developpeur IA</b><br>
+    <b>Projet Data Engineering & Developpement en Intelligence Artificielle</b><br>
     API Banque Mondiale → ETL Python → Log-Transform + Country Encoding → Ridge (R²=0.97) → Streamlit + Plotly<br>
     8 pays · 21 indicateurs · 82 features · 1990-2023 · Horizon 2045
 </div>

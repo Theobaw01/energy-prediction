@@ -1,97 +1,98 @@
-# ⚡ Prévision de la Demande Électrique — Zone UEMOA (Horizon 2045)
+# Prevision de la Demande Electrique -- Zone UEMOA (Horizon 2045)
 
-> **La population croît — combien d'électricité faudra-t-il demain ?**
+**Projet Data Engineering et Developpement en Intelligence Artificielle**
 
-> *Ce projet a été réalisé dans l'objectif de maîtriser les concepts liés à l'ingénierie de données et au Machine Learning, transposables dans des situations réelles de modélisation macroéconomique.*
-
-Projet personnel | Intelligence Artificielle & Analyse Prédictive
+Pipeline ETL et IA complet -- 8 pays -- 82 features -- 1990-2023 vers 2045 -- Maitrise de l'analyse de donnees
 
 ---
 
-## Résumé
+## Resume
 
-Conception d'un **pipeline end-to-end d'intelligence artificielle** pour anticiper la demande électrique des **8 pays de l'UEMOA** à l'horizon 2045 :
+Conception d'un **pipeline end-to-end** (Extract-Transform-Load et modelisation) pour anticiper la demande electrique des **8 pays de l'UEMOA** a l'horizon 2045 :
 
-- **Extraction automatisée** de 21 indicateurs macroéconomiques via l'API Banque Mondiale (8 pays UEMOA, 1990–2023)
-- **Ingénierie de 80+ features** (lags temporels, moyennes mobiles, transformations log, ratios démographiques, interactions croisées)
-- **Entraînement d'un Stacking Regressor** (Random Forest + Gradient Boosting + XGBoost + LightGBM / méta-modèle Ridge) avec **cross-validation temporelle (5 folds)**
-- **Dashboard interactif multi-pays** (Streamlit, Plotly) : sélection de n'importe quel pays UEMOA, benchmark comparatif, projections avec intervalles de confiance à 95%
-
-**Perspective BCEAO** : Maîtrise de la modélisation prédictive sur séries temporelles macroéconomiques et du transfer learning régional (entraînement multi-pays), directement transposable à la projection d'agrégats monétaires, financiers et économiques de la zone UEMOA.
+- **Extraction automatisee** de 21 indicateurs macroeconomiques via l'API REST Banque Mondiale (8 pays, 1990-2023)
+- **Ingenierie de 82 features** : lags temporels, moyennes mobiles, transformations log, ratios demographiques, interactions croisees, encodage pays (one-hot)
+- **Entrainement et comparaison de 7 algorithmes** avec cross-validation temporelle (5 folds) ; meilleur modele retenu : **Ridge Regression** (alpha=10.0, log-transform de la cible, R²=0.968)
+- **Dashboard interactif single-page** (Streamlit, Plotly) : selection de n'importe quel pays UEMOA, benchmark comparatif 8 pays, projections avec intervalles de confiance a 95%
 
 ---
 
-## Résultats Clés
+## Resultats
 
-| Métrique | Valeur |
+| Metrique | Valeur |
 |---|---|
-| **Meilleur modèle** | Stacking Regressor |
-| **Variable cible** | Consommation totale (GWh) |
-| **Données d'entraînement** | 272 observations (8 pays × 34 ans) |
-| **Features** | 80+ variables construites à partir de 21 indicateurs bruts |
-| **Validation** | Split temporel 80/20 + cross-validation temporelle 5 folds |
-| **Projections** | 2024–2045 pour les 8 pays UEMOA |
+| Meilleur modele | Ridge Regression (alpha=10.0) |
+| R² (test) | 0.968 |
+| Variable cible | log1p(conso_totale_gwh) -- evaluation en GWh via expm1 |
+| Donnees d'entrainement | 272 observations (8 pays x 34 ans) |
+| Features | 82 variables construites a partir de 21 indicateurs bruts |
+| Validation | Split temporel 80/20 + cross-validation temporelle 5 folds |
+| Projections | 2024-2045 pour les 8 pays UEMOA |
 
-### Comparaison des 5 modèles
+### Comparaison des 7 modeles
 
-| Modèle | Description |
+| Modele | Description |
 |---|---|
-| **Stacking Ensemble** ✅ | RF + GB + XGBoost + LightGBM → méta-modèle Ridge |
-| Gradient Boosting | 200 arbres, profondeur 5 |
-| Random Forest | 300 arbres, profondeur 8 |
-| XGBoost | 300 arbres, profondeur 6 |
-| LightGBM | 300 arbres, profondeur 6 |
+| **Ridge Regression** (retenu) | alpha=10.0, log1p target, one-hot country encoding |
+| Random Forest | 200 arbres, profondeur 10 |
+| Gradient Boosting | 200 arbres, profondeur 5, lr 0.05 |
+| XGBoost | 200 arbres, profondeur 6 |
+| LightGBM | 200 arbres, profondeur 6 |
+| Linear Regression | Baseline lineaire |
+| Stacking Ensemble | RF + GB + XGB + LGBM, meta-modele Ridge |
 
-> Les métriques exactes (R², RMSE, MAE, MAPE) sont recalculées à chaque exécution du pipeline et affichées dans le dashboard.
+Les metriques exactes (R², RMSE, MAE, MAPE) sont recalculees a chaque execution du pipeline et affichees dans le dashboard.
 
 ---
 
-## Sources de Données (Open Data)
+## Sources de Donnees
 
 | Source | Volume | Couverture |
 |---|---|---|
-| **Banque Mondiale (WDI)** | ~5 175 observations brutes | 21 indicateurs × 8 pays × 34 ans |
+| Banque Mondiale (WDI) | environ 5 600 observations brutes | 21 indicateurs x 8 pays x 34 ans |
 
-**Pays UEMOA couverts** : 🇹🇬 Togo, 🇸🇳 Sénégal, 🇧🇯 Bénin, 🇨🇮 Côte d'Ivoire, 🇧🇫 Burkina Faso, 🇲🇱 Mali, 🇳🇪 Niger, 🇬🇼 Guinée-Bissau
+**Pays UEMOA couverts** : Togo, Senegal, Benin, Cote d'Ivoire, Burkina Faso, Mali, Niger, Guinee-Bissau
 
-**Période** : 1990 – 2023
+**Periode** : 1990 -- 2023
 
 ### 21 Indicateurs par domaine
 
 | Domaine | Indicateurs |
 |---|---|
-| **Démographie** (7) | Population totale, croissance, urbanisation, fécondité, espérance de vie, pop 0-14 ans, pop 15-64 ans |
-| **Énergie** (6) | kWh/hab, accès total/urbain/rural, renouvelable (%), énergie kg pétrole/hab |
-| **Économie** (5) | PIB/hab, PIB total, croissance PIB, industrie (% PIB), inflation |
-| **Social** (3) | Abonnements mobile, alphabétisation, chômage |
+| Demographie (7) | Population totale, croissance, urbanisation, fecondite, esperance de vie, pop 0-14 ans, pop 15-64 ans |
+| Energie (6) | kWh/hab, acces total/urbain/rural, renouvelable (%), energie kg petrole/hab |
+| Economie (5) | PIB/hab, PIB total, croissance PIB, industrie (% PIB), inflation |
+| Social (3) | Abonnements mobile, alphabetisation, chomage |
 
 ---
 
 ## Architecture du Projet
 
 ```
-energy-prediction-togo/
+energy-prediction-gabon/
 ├── data/
-│   ├── raw/                          # ~5 175 observations brutes (API BM)
-│   ├── processed/                    # 272 × 80+ features transformées
-│   └── predictions/                  # Prédictions + projections 2024-2045
+│   ├── raw/                          # Observations brutes (API Banque Mondiale)
+│   ├── processed/                    # Features transformees (82 colonnes)
+│   └── predictions/                  # Predictions + projections 2024-2045
 ├── src/
 │   ├── etl/
 │   │   ├── extract.py                # Extraction API WDI (21 indicateurs, 8 pays)
-│   │   ├── transform.py              # Feature engineering (80+ variables)
-│   │   └── load.py                   # Split temporel + préparation
+│   │   ├── transform.py              # Feature engineering (82 variables)
+│   │   └── load.py                   # Split temporel, log-transform, one-hot encoding
 │   ├── models/
-│   │   ├── train.py                  # 5 modèles + CV temporelle + feature importance
-│   │   └── predict.py                # Projections 2024-2045 × 8 pays avec IC 95%
+│   │   ├── train.py                  # 7 modeles + CV temporelle + feature importance
+│   │   └── predict.py                # Projections 2024-2045, 8 pays, IC 95%
 │   └── utils/
-│       └── config.py                 # Configuration centralisée (21 indicateurs, 8 pays)
+│       └── config.py                 # Configuration centralisee (indicateurs, pays)
 ├── dashboard/
-│   └── app.py                        # Dashboard Streamlit multi-pays (4 onglets)
+│   └── app.py                        # Dashboard Streamlit single-page
 ├── models/
-│   ├── model_energy.joblib           # Modèle Stacking sauvegardé
-│   ├── results.csv                   # Métriques comparatives des 5 modèles
+│   ├── model_energy.joblib           # Modele Ridge sauvegarde
+│   ├── results.csv                   # Metriques comparatives des 7 modeles
 │   ├── cv_scores.csv                 # Scores de cross-validation par fold
-│   └── feature_importance.csv        # Top 15 features les plus influentes
+│   └── feature_importance.csv        # Variables les plus influentes
+├── .streamlit/
+│   └── config.toml                   # Configuration Streamlit (theme, port)
 ├── requirements.txt
 └── README.md
 ```
@@ -100,76 +101,91 @@ energy-prediction-togo/
 
 ## Technologies
 
-| Catégorie | Technologies |
+| Categorie | Technologies |
 |---|---|
-| **ETL & Data** | Python, Pandas, NumPy, API REST Banque Mondiale (WDI) |
-| **Machine Learning** | Scikit-learn (RandomForest, GradientBoosting, Stacking), XGBoost, LightGBM |
-| **Validation** | TimeSeriesSplit (5 folds), split temporel 80/20, feature importance |
-| **Feature Engineering** | Lags (t-1, t-2), MA (3, 5), log-transforms, ratios, interactions croisées |
-| **Visualisation** | Plotly (graphiques interactifs, thème plotly_dark) |
-| **Dashboard** | Streamlit (4 onglets, sélecteur multi-pays, benchmark UEMOA) |
-| **Versioning** | Git, GitHub |
+| ETL et Data | Python, Pandas, NumPy, API REST Banque Mondiale (WDI) |
+| Machine Learning | Scikit-learn (Ridge, RandomForest, GradientBoosting, Stacking), XGBoost, LightGBM |
+| Validation | TimeSeriesSplit (5 folds), split temporel 80/20, feature importance |
+| Feature Engineering | Lags (t-1, t-2), MA (3, 5), log-transforms, ratios, one-hot country encoding |
+| Visualisation | Plotly (graphiques interactifs, theme plotly_white) |
+| Dashboard | Streamlit (single-page, selecteur multi-pays, benchmark UEMOA) |
+| Versioning | Git, GitHub |
 
 ---
 
-## Pipeline
+## Pipeline ETL et Modelisation
 
-### 1. Extract — Collecte automatisée
+### 1. Extract -- Collecte automatisee
 
-Extraction de **21 indicateurs** via l'API Banque Mondiale pour **8 pays UEMOA** (1990–2023).
+Extraction de **21 indicateurs** via l'API REST Banque Mondiale pour **8 pays UEMOA** (1990-2023).
 
-→ **~5 175 observations** brutes extraites automatiquement
+Resultat : environ 5 600 observations brutes extraites automatiquement.
 
-### 2. Transform — Feature Engineering
+### 2. Transform -- Feature Engineering
 
-Pipeline de transformation en plusieurs étapes :
-1. **Pivot** des indicateurs en colonnes (format tabulaire)
-2. **Imputation** des valeurs manquantes (interpolation + forward/backward fill + médiane)
-3. **Variable cible** : `conso_totale_gwh = Population × kWh/hab / 10⁶`
-4. **Features temporelles** : variation annuelle (%), lags (t-1, t-2), moyennes mobiles (MA3, MA5)
-5. **Features classiques** : population active, ratio de dépendance, PIB/hab calculé, interactions
-6. **Features avancées** : log(population), log(PIB), PIB/actif, GWh/PIB, population électrifiée, industrie absolue, interaction croissance PIB × population
-7. **Validation** et nettoyage final
+Pipeline de transformation en plusieurs etapes :
 
-→ **272 lignes × 80+ colonnes** après transformation
+1. Pivot des indicateurs en colonnes (format tabulaire)
+2. Imputation des valeurs manquantes (interpolation + forward/backward fill + mediane)
+3. Variable cible : conso_totale_gwh = Population x kWh/hab / 1 000 000
+4. Features temporelles : variation annuelle (%), lags (t-1, t-2), moyennes mobiles (MA3, MA5)
+5. Features classiques : population active, ratio de dependance, PIB/hab calcule, interactions
+6. Features avancees : log(population), log(PIB), PIB/actif, GWh/PIB, population electrifiee, industrie absolue, interaction croissance PIB x population
+7. Encodage one-hot des pays (country encoding)
+8. Validation et nettoyage final
 
-### 3. Train — Modélisation
+Resultat : 272 lignes x 82 colonnes apres transformation.
 
-**Cible unique** : `conso_totale_gwh` (demande totale en GWh)
+### 3. Load -- Preparation des donnees
 
-**Stratégie** : Entraînement sur les **8 pays UEMOA** simultanément (transfer learning régional) — 272 observations au lieu de 34 pour un seul pays.
+- Application de log1p sur la variable cible (stabilisation de la variance)
+- Split temporel 80/20 (pas de fuite de donnees)
+- Encodage one-hot des pays pour le modele
 
-**5 algorithmes comparés** :
-- Random Forest (300 arbres, profondeur 8)
-- Gradient Boosting (200 arbres, profondeur 5, lr 0.05)
-- XGBoost (300 arbres, profondeur 6)
-- LightGBM (300 arbres, profondeur 6)
-- **Stacking Ensemble** (RF + GB + XGB + LGBM → méta-modèle Ridge) ✅ retenu
+### 4. Train -- Modelisation
+
+**Cible** : log1p(conso_totale_gwh), evaluation en GWh via expm1
+
+**Strategie** : Entrainement sur les 8 pays UEMOA simultanement (272 observations).
+
+**7 algorithmes compares** :
+- Linear Regression (baseline)
+- Ridge Regression (alpha=10.0) -- retenu (R²=0.968)
+- Random Forest
+- Gradient Boosting
+- XGBoost
+- LightGBM
+- Stacking Ensemble (RF + GB + XGB + LGBM, meta Ridge)
 
 **Validation** :
-- Split temporel (80/20) — pas de fuite de données temporelles
+- Split temporel (80/20)
 - Cross-validation temporelle (TimeSeriesSplit, 5 folds)
 - Export automatique des scores CV et de l'importance des features
 
-### 4. Predict — Projections 2045
+### 5. Predict -- Projections 2045
 
-- Prédictions historiques sur l'ensemble du jeu de données (8 pays)
-- **Projections 2024–2045** (22 ans) pour **chaque pays UEMOA** avec intervalles de confiance à 95% (±2σ croissant)
-- Projection démographique intégrée pour estimer la consommation par habitant future
-- Résumé console avec MAE/MAPE par pays et tableau de projection finale
+- Predictions historiques sur l'ensemble du jeu de donnees (8 pays)
+- Projections 2024-2045 (22 ans) pour chaque pays UEMOA avec intervalles de confiance a 95%
+- Methode hybride : 60% ML + 40% CAGR
+- Resume avec MAE/MAPE par pays et tableau de projection finale
 
-### 5. Dashboard — Visualisations Multi-pays & Interprétations IA
+### 6. Dashboard -- Visualisations et Interpretations
 
-**Sélecteur de pays** dans la barre latérale : tout pays UEMOA est consultable individuellement.
+Dashboard single-page avec selecteur de pays dans la barre laterale.
 
-| Onglet | Contenu |
+| Section | Contenu |
 |---|---|
-| **1. Données & Extraction** | Répartition par domaine, couverture par pays UEMOA, explorateur d'indicateurs avec comparaison multi-pays |
-| **2. Exploration** | Co-évolution population/demande, fracture urbain/rural, benchmark GWh UEMOA, matrice de corrélation |
-| **3. Modèle IA** | Comparaison des 5 algorithmes (R², MAPE), cross-validation temporelle, radar multi-critères, feature importance, validation observé vs prédit |
-| **4. Prédictions 2045** | Trajectoire historique + projections avec IC 95%, comparaison des 8 pays, jauge interactive par année, classement projeté UEMOA |
+| En-tete et KPI | Metriques cles du pays selectionne (population, demande, acces, projection, precision) |
+| Pipeline | 4 cartes resumant les etapes Extract, Transform, Train, Predict |
+| Demande et modeles | Evolution GWh + comparaison des 7 algorithmes |
+| Population et acces | Co-evolution population/demande, acces electrique |
+| Variables et fiabilite | Feature importance + cross-validation temporelle |
+| Validation | Valeurs observees vs predictions du modele |
+| Projection 2045 | Trajectoire historique + projections avec IC 95% |
+| Comparaison 8 pays | Benchmark regional UEMOA |
+| Sources et donnees | 21 liens API exacts, donnees brutes, traitees, predictions, projections, resultats modeles |
 
-Chaque graphique est accompagné d'une **interprétation analytique** : élasticité, corrélation de Pearson, analyse de la fracture énergétique, classement régional, implications pour la planification.
+Chaque section est accompagnee d'une **interpretation analytique**.
 
 ---
 
@@ -180,31 +196,31 @@ Chaque graphique est accompagné d'une **interprétation analytique** : élastic
 git clone https://github.com/Theobaw01/energy-prediction-togo.git
 cd energy-prediction-togo
 
-# Créer un environnement virtuel
+# Creer un environnement virtuel
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# .\venv\Scripts\Activate.ps1  # Windows
+source venv/bin/activate        # Linux / Mac
+# .\venv\Scripts\Activate.ps1   # Windows
 
-# Installer les dépendances
+# Installer les dependances
 pip install -r requirements.txt
 ```
 
 ## Utilisation
 
 ```bash
-# 1. Extraction des données (API Banque Mondiale)
+# 1. Extraction des donnees (API Banque Mondiale)
 python src/etl/extract.py
 
-# 2. Transformation & feature engineering
+# 2. Transformation et feature engineering
 python src/etl/transform.py
 
-# 3. Entraînement des modèles (5 algorithmes + cross-validation)
+# 3. Entrainement des modeles (7 algorithmes + cross-validation)
 python src/models/train.py
 
-# 4. Génération des prédictions & projections 2024-2045 (8 pays)
+# 4. Generation des predictions et projections 2024-2045 (8 pays)
 python src/models/predict.py
 
-# 5. Lancement du dashboard interactif multi-pays
+# 5. Lancement du dashboard interactif
 python -m streamlit run dashboard/app.py
 ```
 
@@ -212,22 +228,22 @@ Le dashboard sera accessible sur **http://localhost:8501**.
 
 ---
 
-## Pertinence BCEAO / UEMOA
+## Competences demontrees
 
-> Ce projet démontre des compétences directement transposables aux missions de la **Banque Centrale des États de l'Afrique de l'Ouest**.
-
-| Compétence | Application dans le projet | Transposition BCEAO |
-|---|---|---|
-| **Pipeline de données** | ETL automatisé (API → transformation → modèle → dashboard) | Intégration de flux de données macroéconomiques |
-| **ML sur séries temporelles** | Stacking Regressor sur 34 ans de données avec CV temporelle | Projection d'agrégats monétaires et financiers |
-| **Transfer learning régional** | Entraînement sur 8 pays pour prédire sur chacun | Modélisation multi-pays de la zone franc |
-| **Feature engineering avancé** | 80+ variables (log, interactions, lags, MA) à partir de 21 brutes | Création d'indicateurs dérivés pour l'analyse économique |
-| **Dashboard multi-pays** | Sélecteur de pays, benchmark comparatif, interprétations IA | Reporting analytique régional pour les organes décisionnels |
-| **Validation rigoureuse** | TimeSeriesSplit 5 folds, feature importance, IC 95% | Fiabilité des modèles de prévision institutionnels |
+| Competence | Application dans le projet |
+|---|---|
+| Pipeline ETL / ELT | Extraction API, transformation, chargement automatise |
+| Machine Learning | 7 modeles compares, Ridge retenu (R²=0.968) |
+| Analyse predictive | Projections 2024-2045 avec intervalles de confiance |
+| Python et librairies IA | Scikit-learn, XGBoost, LightGBM, Pandas, NumPy |
+| Tableaux de bord (BI) | Dashboard Streamlit + Plotly, graphiques interactifs |
+| Modelisation de donnees | 82 features construites a partir de 21 indicateurs bruts |
+| Validation rigoureuse | TimeSeriesSplit 5 folds, split temporel, feature importance |
 
 ---
 
 ## Auteur
 
-**Théodore Bawana** — Développeur en Intelligence Artificielle
-[GitHub](https://github.com/Theobaw01)
+**Theodore Bawana** -- Developpeur en Intelligence Artificielle
+
+GitHub : https://github.com/Theobaw01
